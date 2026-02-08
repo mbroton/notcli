@@ -1,0 +1,31 @@
+{
+  "name": "notion-lite",
+  "version": "0.1.0",
+  "description": "Token-efficient CLI for personal Notion workspaces",
+  "type": "module",
+  "bin": {
+    "notion-lite": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.1.0",
+    "better-sqlite3": "^11.8.1",
+    "commander": "^12.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
