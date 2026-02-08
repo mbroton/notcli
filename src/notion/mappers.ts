@@ -125,14 +125,116 @@ export function toFullDataSource(dataSource: Record<string, unknown>): Record<st
     last_edited_time: dataSource.last_edited_time ?? null,
     parent: normalizeParent(dataSource.parent),
     properties: Object.fromEntries(
-      Object.entries(properties).map(([name, value]) => {
-        if (!value || typeof value !== "object") {
-          return [name, { type: "unknown", id: "" }];
-        }
-        const property = value as { type?: unknown; id?: unknown };
-        return [name, { type: property.type ?? "unknown", id: property.id ?? "" }];
-      }),
+      Object.entries(properties).map(([name, value]) => [name, toFullDataSourceProperty(value)]),
     ),
+  };
+}
+
+function normalizeOptions(options: unknown): Array<{ id: string | null; name: string | null; color: string | null }> {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options
+    .map((option) => {
+      if (!option || typeof option !== "object") {
+        return { id: null, name: null, color: null };
+      }
+      const record = option as { id?: unknown; name?: unknown; color?: unknown };
+      return {
+        id: typeof record.id === "string" ? record.id : null,
+        name: typeof record.name === "string" ? record.name : null,
+        color: typeof record.color === "string" ? record.color : null,
+      };
+    })
+    .filter((option) => option.id !== null || option.name !== null);
+}
+
+function normalizeStatusGroups(groups: unknown): Array<{ id: string | null; name: string | null; color: string | null }> {
+  if (!Array.isArray(groups)) {
+    return [];
+  }
+
+  return groups
+    .map((group) => {
+      if (!group || typeof group !== "object") {
+        return { id: null, name: null, color: null };
+      }
+      const record = group as { id?: unknown; name?: unknown; color?: unknown };
+      return {
+        id: typeof record.id === "string" ? record.id : null,
+        name: typeof record.name === "string" ? record.name : null,
+        color: typeof record.color === "string" ? record.color : null,
+      };
+    })
+    .filter((group) => group.id !== null || group.name !== null);
+}
+
+function normalizePropertyConfig(type: string, config: unknown): unknown {
+  if (!config || typeof config !== "object") {
+    return config ?? null;
+  }
+
+  const record = config as Record<string, unknown>;
+  switch (type) {
+    case "select":
+    case "multi_select":
+      return {
+        options: normalizeOptions(record.options),
+      };
+    case "status":
+      return {
+        options: normalizeOptions(record.options),
+        groups: normalizeStatusGroups(record.groups),
+      };
+    case "relation":
+      return {
+        data_source_id:
+          typeof record.data_source_id === "string"
+            ? record.data_source_id
+            : typeof record.database_id === "string"
+              ? record.database_id
+              : null,
+        synced_property_id:
+          typeof record.synced_property_id === "string" ? record.synced_property_id : null,
+        synced_property_name:
+          typeof record.synced_property_name === "string" ? record.synced_property_name : null,
+      };
+    case "rollup":
+      return {
+        relation_property_id:
+          typeof record.relation_property_id === "string" ? record.relation_property_id : null,
+        relation_property_name:
+          typeof record.relation_property_name === "string" ? record.relation_property_name : null,
+        rollup_property_id:
+          typeof record.rollup_property_id === "string" ? record.rollup_property_id : null,
+        rollup_property_name:
+          typeof record.rollup_property_name === "string" ? record.rollup_property_name : null,
+        function: typeof record.function === "string" ? record.function : null,
+      };
+    case "formula":
+      return {
+        expression: typeof record.expression === "string" ? record.expression : null,
+      };
+    default:
+      return record;
+  }
+}
+
+function toFullDataSourceProperty(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object") {
+    return { type: "unknown", id: "", config: null };
+  }
+
+  const property = value as Record<string, unknown>;
+  const type = typeof property.type === "string" ? property.type : "unknown";
+  const id = typeof property.id === "string" ? property.id : "";
+  const config = type !== "unknown" ? normalizePropertyConfig(type, property[type]) : null;
+
+  return {
+    id,
+    type,
+    config,
   };
 }
 

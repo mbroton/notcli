@@ -74,6 +74,8 @@ export function buildInitialAuthConfig(input: InitAuthConfigInput): AppConfig {
       max_blocks: 200,
       timeout_ms: 30000,
       schema_ttl_hours: 24,
+      bulk_create_concurrency: 5,
+      search_scan_limit: 500,
     },
     schema_cache: {},
   });

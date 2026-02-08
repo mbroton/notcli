@@ -20,6 +20,8 @@ export const AppConfigSchema = z.object({
       max_blocks: z.number().int().positive().max(2000).default(200),
       timeout_ms: z.number().int().positive().max(120000).default(30000),
       schema_ttl_hours: z.number().int().positive().max(720).default(24),
+      bulk_create_concurrency: z.number().int().positive().max(20).default(5),
+      search_scan_limit: z.number().int().positive().max(5000).default(500),
     })
     .default({}),
   schema_cache: z.record(z.string(), SchemaCacheEntrySchema).default({}),

@@ -144,6 +144,12 @@ export class NotionClientAdapter {
     );
   }
 
+  retrieveBlock(blockId: string): Promise<unknown> {
+    return this.execute("blocks.retrieve", () =>
+      this.client.blocks.retrieve({ block_id: blockId } as never) as unknown as Promise<unknown>,
+    );
+  }
+
   createPage(args: Record<string, unknown>): Promise<unknown> {
     return this.execute("pages.create", () =>
       this.client.pages.create(args as never) as unknown as Promise<unknown>,
@@ -153,6 +159,18 @@ export class NotionClientAdapter {
   updatePage(args: Record<string, unknown>): Promise<unknown> {
     return this.execute("pages.update", () =>
       this.client.pages.update(args as never) as unknown as Promise<unknown>,
+    );
+  }
+
+  updateBlock(args: Record<string, unknown>): Promise<unknown> {
+    return this.execute("blocks.update", () =>
+      this.client.blocks.update(args as never) as unknown as Promise<unknown>,
+    );
+  }
+
+  deleteBlock(args: Record<string, unknown>): Promise<unknown> {
+    return this.execute("blocks.delete", () =>
+      this.client.blocks.delete(args as never) as unknown as Promise<unknown>,
     );
   }
 

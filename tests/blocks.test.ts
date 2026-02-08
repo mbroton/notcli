@@ -51,4 +51,43 @@ describe("getBlocks truncation metadata", () => {
     expect(result.returned_blocks).toBe(2);
     expect(result.truncated).toBe(false);
   });
+
+  it("returns markdown content when markdown format is requested", async () => {
+    const notion = {
+      listBlockChildren: vi
+        .fn()
+        .mockResolvedValueOnce({
+          results: [
+            {
+              object: "block",
+              id: "h1",
+              type: "heading_1",
+              has_children: false,
+              heading_1: {
+                rich_text: [{ plain_text: "Heading" }],
+              },
+            },
+            {
+              object: "block",
+              id: "p1",
+              type: "paragraph",
+              has_children: false,
+              paragraph: {
+                rich_text: [{ plain_text: "Body text" }],
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+    } as unknown as NotionClientAdapter;
+
+    const result = await getBlocks(notion, "page-1", 10, 1, "markdown");
+
+    expect(result.format).toBe("markdown");
+    expect(result.content_markdown).toContain("# Heading");
+    expect(result.content_markdown).toContain("Body text");
+    expect(result.returned_blocks).toBe(2);
+    expect(result.truncated).toBe(false);
+  });
 });

@@ -1,21 +1,21 @@
-# notion-lite v1 Specification (Revised)
+# notion-lite v1.1 Specification
 
 ## Summary
 
-`notion-lite` is a workspace-agnostic Notion CLI that exposes compact, deterministic JSON for terminal and AI-agent workflows.
+`notion-lite` is a workspace-agnostic Notion CLI that exposes compact, deterministic JSON for terminal and AI-agent workflows, with richer read/write ergonomics.
 
 ## Goals
 
 - Work across arbitrary Notion workspaces without fixed schema assumptions.
-- Keep outputs token-lean and machine-parseable.
-- Provide generic primitives for search, data source operations, page CRUD, and block operations.
-- Keep safety mechanisms internal (idempotency and conflict handling) without surfacing low-level knobs to users.
+- Keep outputs machine-parseable and relatively token-lean.
+- Provide strong primitives for search, schema introspection, page CRUD, relation edits, and block content.
+- Keep safety mechanisms internal (idempotency + best-effort conflict handling).
 
 ## Non-Goals
 
 - Multi-tenant auth or OAuth flows.
 - Manual schema cache lifecycle commands.
-- User-managed idempotency or version tokens.
+- User-managed idempotency keys or optimistic-concurrency tokens.
 
 ## Users
 
@@ -27,12 +27,14 @@
 - Setup:
   - `auth` command for interactive/non-interactive auth configuration.
 - Discovery:
-  - `search` for workspace-wide title-oriented search.
-  - `data-sources list|get|query`.
+  - `search` with optional scope/date/creator/object filters.
+  - `data-sources list|get|schema|query`.
 - Pages:
-  - `pages get|create|update|archive|relate|unrelate`.
+  - `pages get|create|create-bulk|update|archive|unarchive|relate|unrelate`.
+  - `pages get --include-content` to fetch properties + block content in one call.
 - Blocks:
   - `blocks get|append`.
+  - `blocks append` supports `--blocks-json`, `--markdown`, or `--markdown-file`.
 - Health:
   - `doctor`.
 
@@ -44,9 +46,10 @@
 
 ## Internal Behavior
 
-- Schema cache is internal and auto-refreshed on miss/staleness/inference failure.
-- Idempotency keys are generated internally for mutating commands.
-- Page mutations use best-effort internal optimistic-concurrency handling.
+- Schema cache is internal and auto-refreshed on miss/staleness/validation failures.
+- Mutating commands use internal idempotency keys (SQLite-backed replay).
+- Page mutations use best-effort internal optimistic-concurrency retries.
+- Bulk create supports up to 100 pages per command.
 
 ## Integrations
 
@@ -59,13 +62,16 @@
 
 ## Edge Cases
 
-- Missing config or token env -> fail-fast `auth_or_config` with setup guidance.
+- Missing config/token env -> fail-fast `auth_or_config` with setup guidance.
 - Unknown data source property in mutation payload -> `invalid_input` with property hint.
-- Concurrent updates can still conflict; CLI retries best-effort and surfaces structured conflict when unresolved.
+- Concurrent updates can still conflict after retries.
+- Markdown input supports a constrained block subset; unsupported syntax degrades to paragraphs.
 
 ## Acceptance Criteria
 
-- CLI works in any workspace after `auth` setup only.
-- No manual schema refresh command exists.
-- No user-facing `--if-match` or `--idempotency-key` options.
-- Search and generic data-source/page/block commands work with compact JSON envelopes.
+- CLI works in any workspace after `auth` setup.
+- `pages get` can return full page + content in a single response.
+- Data-source schema output is rich enough to build valid `properties-json` payloads.
+- Mutations can return full updated page state via `--return-view full`.
+- `pages unarchive` and `pages create-bulk` are available.
+- `search` supports scope/date/creator/object filtering.
